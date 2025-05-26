@@ -14,3 +14,11 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Running Code
+
+To run code, use this command (to have a persistent localstorage through launches if using Web browser to render the app):
+
+```
+flutter run -d <your_device_name> --web-port=5000
+```
