@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:organizeit/screens/task_board_screen.dart';
 import 'package:organizeit/utils/storage.dart';
 import '../models/project.dart';
 import '../widgets/project_card.dart';
@@ -18,6 +19,12 @@ class ProjectListScreenState extends State<ProjectListScreen> {
   void initState() {
     super.initState();
     _loadProjects();
+  }
+
+  @override
+  void dispose() {
+    _saveProjects();
+    super.dispose();
   }
 
   Future<void> _loadProjects() async {
@@ -132,7 +139,20 @@ class ProjectListScreenState extends State<ProjectListScreen> {
                   onDelete: _ensureDeleteProject,
                   onEdit: () => _showProjectDialog(project: proj, isEditing: true),
                   onTap: () {
-                    // TODO: Navigate to task_board_screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TaskBoardScreen(
+                          project: proj,
+                          onUpdate: (updatedProject) {
+                            setState(() {
+                              _projects[index] = updatedProject;
+                            });
+                            _saveProjects();
+                          },
+                        ),
+                      ),
+                    );
                   },
                 );
               },
