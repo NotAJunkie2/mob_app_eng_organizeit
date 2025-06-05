@@ -43,11 +43,11 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     super.dispose();
   }
 
-  void _addTask(String title) {
+  void _addTask(String title, String status) {
     final newTask = Task(
       id: Random().nextDouble().toString(),
       title: title,
-      status: 'todo',
+      status: status,
     );
     setState(() {
       _project.tasks.add(newTask);
@@ -75,35 +75,59 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
 
   void _showAddTaskDialog() {
     final controller = TextEditingController();
+    String selectedStatus = 'todo'; // Default status
+
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Add Task'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: 'Task Title'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Add Task'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(labelText: 'Task Title'),
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedStatus,
+                decoration: InputDecoration(labelText: 'Status'),
+                items: [
+                  DropdownMenuItem(value: 'todo', child: Text('To-Do')),
+                  DropdownMenuItem(value: 'in_progress', child: Text('In Progress')),
+                  DropdownMenuItem(value: 'done', child: Text('Done')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedStatus = value!;
+                  });
+                },
+              ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
             ),
-            onPressed: () {
-              final title = controller.text.trim();
-              if (title.isNotEmpty) {
-                _addTask(title);
-              }
-              Navigator.pop(context);
-            },
-            child: Text('Add', style: TextStyle(
-              color: Colors.white,
-            ),),
-          ),
-        ],
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+              ),
+              onPressed: () {
+                final title = controller.text.trim();
+                if (title.isNotEmpty) {
+                  _addTask(title, selectedStatus);
+                }
+                Navigator.pop(context);
+              },
+              child: Text('Add', style: TextStyle(
+                color: Colors.white,
+              ),),
+            ),
+          ],
+        ),
       ),
     );
   }
