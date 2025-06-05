@@ -130,9 +130,9 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
               }
             },
             itemBuilder: (_) => [
-              PopupMenuItem(value: 'todo', child: Text('Move to To-Do')),
-              PopupMenuItem(value: 'in_progress', child: Text('Move to In Progress')),
-              PopupMenuItem(value: 'done', child: Text('Move to Done')),
+              if (status != 'todo') PopupMenuItem(value: 'todo', child: Text('Move to To-Do')),
+              if (status != 'in_progress') PopupMenuItem(value: 'in_progress', child: Text('Move to In Progress')),
+              if (status != 'done') PopupMenuItem(value: 'done', child: Text('Move to Done')),
               PopupMenuDivider(),
               PopupMenuItem(value: 'delete', child: Text('Delete Task', style: TextStyle(color: Colors.red))),
             ],
