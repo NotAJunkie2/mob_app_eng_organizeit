@@ -103,8 +103,9 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     return Draggable<Task>(
       data: task,
       feedback: Material(
+        color: Colors.transparent,
         child: SizedBox(
-          width: 300,
+          width: 400,
           child: Card(
             margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: ListTile(
@@ -114,9 +115,6 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
         ),
       ),
       childWhenDragging: Container(),
-      onDragCompleted: () {
-        // Optionally handle drag completion
-      },
       child: Card(
         margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: ListTile(
