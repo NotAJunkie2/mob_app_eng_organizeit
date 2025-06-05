@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:organizeit/models/project.dart';
 import 'package:organizeit/models/task.dart';
 import 'dart:math';
+import 'dart:async';
 
 class TaskBoardScreen extends StatefulWidget {
   final Project project;
@@ -21,6 +22,10 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
   late Project _project;
   static const _minimumColumnWidth = 300.0;
 
+  final ScrollController _boardScrollController = ScrollController();
+  bool _isDragging = false;
+  Timer? _autoScrollTimer;
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +34,13 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
       name: widget.project.name,
       tasks: List<Task>.from(widget.project.tasks),
     );
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _boardScrollController.dispose();
+    super.dispose();
   }
 
   void _addTask(String title) {
@@ -100,10 +112,71 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     return _project.tasks.where((task) => task.status == status).toList();
   }
 
+  void _startAutoScroll(bool scrollLeft, double scrollSpeed) {
+    _autoScrollTimer?.cancel();
+
+    _autoScrollTimer = Timer.periodic(Duration(milliseconds: 20), (timer) {
+      if (_boardScrollController.hasClients) {
+        if (scrollLeft && _boardScrollController.position.pixels > 0) {
+          _boardScrollController.jumpTo(
+            (_boardScrollController.position.pixels - scrollSpeed).clamp(
+              0.0,
+              _boardScrollController.position.maxScrollExtent
+            )
+          );
+        } else if (!scrollLeft &&
+            _boardScrollController.position.pixels < _boardScrollController.position.maxScrollExtent) {
+          _boardScrollController.jumpTo(
+            (_boardScrollController.position.pixels + scrollSpeed).clamp(
+              0.0,
+              _boardScrollController.position.maxScrollExtent
+            )
+          );
+        } else {
+          _autoScrollTimer?.cancel();
+        }
+      }
+    });
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+  }
+
   Widget _buildDraggableTaskCard(Task task, String status, double width) {
     return LongPressDraggable<Task>(
       data: task,
       delay: Duration(milliseconds: 150), // This makes mobile easier to use
+      onDragStarted: () {
+        setState(() {
+          _isDragging = true;
+        });
+      },
+      onDragEnd: (_) {
+        setState(() {
+          _isDragging = false;
+        });
+        _stopAutoScroll();
+      },
+      onDragUpdate: (details) {
+        if (_isDragging) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final sensitivity = 60.0;
+          final scrollSpeed = 5.0;
+
+          if (details.globalPosition.dx < sensitivity && _boardScrollController.position.pixels > 0) {
+            // Near left edge => start scrolling left
+            _startAutoScroll(true, scrollSpeed);
+          } else if (details.globalPosition.dx > screenWidth - sensitivity &&
+                    _boardScrollController.position.pixels < _boardScrollController.position.maxScrollExtent) {
+            // Near right edge => start scrolling right
+            _startAutoScroll(false, scrollSpeed);
+          } else {
+            _stopAutoScroll();
+          }
+        }
+      },
       feedback: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -228,6 +301,7 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
             canFitAllColumns ? (screenWidth / columnCount) - columnMargin : _minimumColumnWidth;
 
           return SingleChildScrollView(
+            controller: _boardScrollController,
             scrollDirection: Axis.horizontal,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
