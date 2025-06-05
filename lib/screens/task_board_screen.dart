@@ -19,6 +19,7 @@ class TaskBoardScreen extends StatefulWidget {
 
 class _TaskBoardScreenState extends State<TaskBoardScreen> {
   late Project _project;
+  static const _minimumColumnWidth = 300.0;
 
   @override
   void initState() {
@@ -99,22 +100,37 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     return _project.tasks.where((task) => task.status == status).toList();
   }
 
-  Widget _buildDraggableTaskCard(Task task, String status) {
-    return Draggable<Task>(
+  Widget _buildDraggableTaskCard(Task task, String status, double width) {
+    return LongPressDraggable<Task>(
       data: task,
+      delay: Duration(milliseconds: 150), // This makes mobile easier to use
       feedback: Material(
         color: Colors.transparent,
-        child: SizedBox(
-          width: 400,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: width - 8 * 2,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Card(
-            margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            margin: EdgeInsets.zero,
+            elevation: 0,
             child: ListTile(
               title: Text(task.title),
             ),
           ),
         ),
       ),
-      childWhenDragging: Container(),
+      childWhenDragging: Opacity(
+        opacity: 0.3,
+        child: Card(
+          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: ListTile(
+            title: Text(task.title),
+          ),
+        ),
+      ),
       child: Card(
         margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: ListTile(
@@ -140,16 +156,17 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     );
   }
 
-  Widget _buildColumn(String title, String status) {
+  Widget _buildColumn(String title, String status, double width) {
     final tasks = _getTasksByStatus(status);
 
-    return Expanded(
+    return Container(
+      width: width,
+      margin: EdgeInsets.symmetric(horizontal: 8),
       child: DragTarget<Task>(
         onAcceptWithDetails: (details) => _moveTask(details.data, status),
         onWillAcceptWithDetails: (details) => details.data.status != status,
         builder: (context, candidateData, rejectedData) {
           return Container(
-            margin: EdgeInsets.all(8),
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.grey[200],
@@ -179,7 +196,7 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
                     itemCount: tasks.length,
                     itemBuilder: (_, index) {
                       final task = tasks[index];
-                      return _buildDraggableTaskCard(task, status);
+                      return _buildDraggableTaskCard(task, status, width);
                     },
                   ),
                 ),
@@ -197,12 +214,31 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
       appBar: AppBar(
         title: Text(_project.name),
       ),
-      body: Row(
-        children: [
-          _buildColumn('To-Do', 'todo'),
-          _buildColumn('In Progress', 'in_progress'),
-          _buildColumn('Done', 'done'),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate if all columns can fit on screen
+          const int columnCount = 3; // todo, in_progress, done
+          const double columnMargin = 16; // Total horizontal margin per column
+          final double screenWidth = constraints.maxWidth;
+          final double totalColumnWidth = _minimumColumnWidth * columnCount + (columnMargin * columnCount);
+          final bool canFitAllColumns = screenWidth >= totalColumnWidth;
+
+          // If we can fit all columns, expand them to fill screen
+          final double columnWidth =
+            canFitAllColumns ? (screenWidth / columnCount) - columnMargin : _minimumColumnWidth;
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildColumn('To-Do', 'todo', columnWidth),
+                _buildColumn('In Progress', 'in_progress', columnWidth),
+                _buildColumn('Done', 'done', columnWidth),
+              ],
+            ),
+          );
+        }
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTaskDialog,
