@@ -163,7 +163,7 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
         if (_isDragging) {
           final screenWidth = MediaQuery.of(context).size.width;
           final sensitivity = 60.0;
-          final scrollSpeed = 5.0;
+          final scrollSpeed = 7.5;
 
           if (details.globalPosition.dx < sensitivity && _boardScrollController.position.pixels > 0) {
             // Near left edge => start scrolling left
