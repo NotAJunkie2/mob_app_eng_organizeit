@@ -7,11 +7,11 @@ class Task {
   Task({required this.id, required this.title, this.status = 'todo', this.details = ''});
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'status': status,
-        'details': details,
-      };
+    'id': id,
+    'title': title,
+    'status': status,
+    'details': details,
+  };
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(

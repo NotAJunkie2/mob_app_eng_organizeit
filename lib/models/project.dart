@@ -8,10 +8,10 @@ class Project {
   Project({required this.id, required this.name, this.tasks = const []});
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'tasks': tasks.map((t) => t.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'tasks': tasks.map((t) => t.toJson()).toList(),
+  };
 
   factory Project.fromJson(Map<String, dynamic> json) {
     return Project(

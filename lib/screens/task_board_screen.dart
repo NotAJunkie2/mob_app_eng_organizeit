@@ -23,7 +23,6 @@ class TaskBoardScreen extends StatefulWidget {
 class _TaskBoardScreenState extends State<TaskBoardScreen> {
   late Project _project;
   static const _minimumColumnWidth = 300.0;
-
   final ScrollController _boardScrollController = ScrollController();
   bool _isDragging = false;
   Timer? _autoScrollTimer;
