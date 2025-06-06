@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:organizeit/models/project.dart';
 import 'package:organizeit/models/task.dart';
+import 'package:organizeit/screens/task_details_screen.dart';
+import 'package:organizeit/widgets/task_card.dart';
 import 'dart:math';
 import 'dart:async';
 
@@ -91,10 +93,13 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
   }
 
   void _moveTask(Task task, String newStatus) {
-    setState(() {
-      task.status = newStatus;
-    });
-    _saveProject();
+    final updatedTask = Task(
+      id: task.id,
+      title: task.title,
+      status: newStatus,
+      details: task.details,
+    );
+    _updateTask(task.id, updatedTask);
   }
 
   void _saveProject() async {
@@ -196,16 +201,19 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     _autoScrollTimer = null;
   }
 
-  Widget _buildDraggableTaskCard(Task task, String status, double width) {
-    return LongPressDraggable<Task>(
-      data: task,
-      delay: Duration(milliseconds: 150), // This makes mobile easier to use
+  Widget _buildTaskCard(Task task, String status, double width) {
+    return TaskCard(
+      task: task,
+      currentStatus: status,
+      width: width,
+      onMove: (newStatus) => _moveTask(task, newStatus),
+      onDelete: () => _ensureDeleteTask(task.id),
       onDragStarted: () {
         setState(() {
           _isDragging = true;
         });
       },
-      onDragEnd: (_) {
+      onDragEnd: () {
         setState(() {
           _isDragging = false;
         });
@@ -229,56 +237,28 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
           }
         }
       },
-      feedback: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: width - 8 * 2,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Card(
-            margin: EdgeInsets.zero,
-            elevation: 0,
-            child: ListTile(
-              title: Text(task.title),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TaskDetailsScreen(
+              task: task,
+              onUpdate: (updatedTask) => _updateTask(task.id, updatedTask),
             ),
           ),
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.3,
-        child: Card(
-          margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: ListTile(
-            title: Text(task.title),
-          ),
-        ),
-      ),
-      child: Card(
-        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: ListTile(
-          title: Text(task.title),
-          trailing: PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'delete') {
-                _ensureDeleteTask(task.id);
-              } else {
-                _moveTask(task, value);
-              }
-            },
-            itemBuilder: (_) => [
-              if (status != 'todo') PopupMenuItem(value: 'todo', child: Text('Move to To-Do')),
-              if (status != 'in_progress') PopupMenuItem(value: 'in_progress', child: Text('Move to In Progress')),
-              if (status != 'done') PopupMenuItem(value: 'done', child: Text('Move to Done')),
-              PopupMenuDivider(),
-              PopupMenuItem(value: 'delete', child: Text('Delete Task', style: TextStyle(color: Colors.red))),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  void _updateTask(String taskId, Task updatedTask) {
+    setState(() {
+      final index = _project.tasks.indexWhere((t) => t.id == taskId);
+      if (index != -1) {
+        _project.tasks[index] = updatedTask;
+      }
+    });
+    _saveProject();
   }
 
   Widget _buildColumn(String title, String status, double width) {
@@ -321,7 +301,7 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
                     itemCount: tasks.length,
                     itemBuilder: (_, index) {
                       final task = tasks[index];
-                      return _buildDraggableTaskCard(task, status, width);
+                      return _buildTaskCard(task, status, width);
                     },
                   ),
                 ),
