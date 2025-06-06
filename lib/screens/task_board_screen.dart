@@ -62,6 +62,34 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
     _saveProject();
   }
 
+  void _ensureDeleteTask(String id) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Delete Task'),
+        content: Text('Are you sure you want to delete this task?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () {
+              _deleteTask(id);
+              Navigator.pop(context);
+            },
+            child: Text('Delete', style: TextStyle(
+              color: Colors.white,
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _moveTask(Task task, String newStatus) {
     setState(() {
       task.status = newStatus;
@@ -235,7 +263,7 @@ class _TaskBoardScreenState extends State<TaskBoardScreen> {
           trailing: PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'delete') {
-                _deleteTask(task.id);
+                _ensureDeleteTask(task.id);
               } else {
                 _moveTask(task, value);
               }
